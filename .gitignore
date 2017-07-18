@@ -1,0 +1,11 @@
+/_build
+/cover
+/deps
+/doc
+/.fetch
+erl_crash.dump
+*.ez
+priv/
+**/*.o
+mix.lock
+.vscode/c_cpp_properties.json

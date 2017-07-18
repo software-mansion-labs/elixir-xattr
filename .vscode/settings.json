@@ -1,0 +1,19 @@
+{
+    "files.associations": {
+        "erl_nif.h": "c",
+        "utils.h": "c",
+        "libio.h": "c",
+        "error_constants.h": "c",
+        "erl_nif_api_funcs.h": "c",
+        "xattr.h": "c",
+        "linux.c": "cpp",
+        "array": "c",
+        "string_view": "c",
+        "buffer.h": "c",
+        "string.h": "c",
+        "stringimpl.h": "c",
+        "unichar.h": "c",
+        "getopt.h": "c",
+        "cerrno": "cpp"
+    }
+}
