@@ -17,8 +17,7 @@ endif
 
 .PHONY: all clean
 
-all:
-	$(MIX) compile
+all: priv/elixir_xattr.so
 
 priv/elixir_xattr.so: $(OBJ)
 	mkdir -p priv/

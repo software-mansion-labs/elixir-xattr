@@ -2,7 +2,7 @@
 
 Elixir-Xattr is a library for accessing and manipulating custom [extended filesystem attributes](https://en.wikipedia.org/wiki/Extended_file_attributes). Main goals are to provide straightforward API and portability, Unix platforms are supported and Windows is also planned.
 
-This library doesn't aim at supporting platform specific features, e.g. there is no (and won't be) possiblitity to access attributes from other namespace than *user_* on Linux.
+This library doesn't aim at supporting platform specific features, e.g. there is no (and won't be) possiblitity to access attributes from other namespaces than *user.* on Linux.
 
 ## Installation
 
