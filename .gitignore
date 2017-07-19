@@ -1,10 +1,11 @@
+.vscode/c_cpp_properties.json
+.vscode/settings.json
+*.ez
 /_build
+/.fetch
 /cover
 /deps
 /doc
-/.fetch
 erl_crash.dump
-*.ez
+Makefile.auto.win
 mix.lock
-.vscode/c_cpp_properties.json
-.vscode/settings.json
