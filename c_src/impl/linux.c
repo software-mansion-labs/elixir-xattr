@@ -122,21 +122,19 @@ bool getxattr_impl(UNUSED ErlNifEnv *env, const char *path, const char *name,
     return false;
   }
 
-  for (;;) {
-    if ((result = getxattr(path, real_name, bin->data, bin->size)) == -1) {
-      if (errno == ERANGE) {
-        new_size = bin->size * 2;
-        if (!enif_realloc_binary(bin, new_size)) {
-          errno = ERANGE;
-          enif_free(real_name);
-          return false;
-        }
-        continue;
+  while ((result = getxattr(path, real_name, bin->data, bin->size)) == -1) {
+    if (errno == ERANGE) {
+      new_size = bin->size * 2;
+      if (!enif_realloc_binary(bin, new_size)) {
+        errno = ERANGE;
+        enif_free(real_name);
+        return false;
       }
+      /* continue with bigger buffer */
+    } else {
       enif_free(real_name);
       return false;
     }
-    break;
   }
 
   enif_free(real_name);
