@@ -9,3 +9,4 @@ priv/
 **/*.o
 mix.lock
 .vscode/c_cpp_properties.json
+.vscode/settings.json
