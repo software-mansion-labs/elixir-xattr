@@ -4,7 +4,12 @@ CFLAGS 	:= -g -O3 -ansi -pedantic -Wall -Wextra
 ERLANG_PATH := $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir(), "/erts-", erlang:system_info(version), "/include"])])' -s init stop -noshell)
 CFLAGS 		+= -I$(ERLANG_PATH)
 
-SRC	:= c_src/xattr.c c_src/xattr_impl.h c_src/util.c c_src/impl/linux.c
+SRC	:= c_src/xattr.c \
+	   c_src/impl.h \
+	   c_src/util.h \
+	   c_src/util.c \
+	   c_src/impl_xattr.c
+
 OBJ	:= $(SRC:.c=.o)
 
 ifneq ($(OS),Windows_NT)
@@ -27,4 +32,3 @@ clean:
 	$(MIX) clean
 	$(RM) -rf priv/
 	$(RM) c_src/*.o
-	$(RM) c_src/**/*.o

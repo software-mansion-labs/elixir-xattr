@@ -1,9 +1,10 @@
-#include "../xattr_impl.h"
+#include "impl.h"
 
-#include "../util.h"
+#include "util.h"
 #include <errno.h>
 #include <stdio.h>
 #include <string.h>
+
 #include <sys/types.h>
 #include <sys/xattr.h>
 

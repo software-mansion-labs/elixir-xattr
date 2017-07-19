@@ -5,8 +5,8 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "impl.h"
 #include "util.h"
-#include "xattr_impl.h"
 
 /*
  * Exported NIFs
