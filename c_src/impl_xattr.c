@@ -1,10 +1,10 @@
 #include "impl.h"
 
 #include "util.h"
-#include <errno.h>
 #include <stdio.h>
 #include <string.h>
 
+#include <errno.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
 
@@ -170,4 +170,20 @@ bool removexattr_impl(UNUSED ErlNifEnv *env, const char *path,
 
   enif_free(real_name);
   return TO_BOOL(result);
+}
+
+ERL_NIF_TERM make_errno_term(ErlNifEnv *env) {
+  switch (errno) {
+  case E2BIG: return make_atom(env, "e2big");
+  case EAGAIN: return make_atom(env, "eagain");
+  case EDQUOT: return make_atom(env, "edquot");
+  case EFAULT: return make_atom(env, "efault");
+  case ENODATA: return make_atom(env, "enoattr");
+  case ENOENT: return make_atom(env, "enoent");
+  case ENOSPC: return make_atom(env, "enospc");
+  case ENOTSUP: return make_atom(env, "enotsup");
+  case EPERM: return make_atom(env, "eperm");
+  case ERANGE: return make_atom(env, "erange");
+  default: return enif_make_string(env, strerror(errno), ERL_NIF_LATIN1);
+  }
 }

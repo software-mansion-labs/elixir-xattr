@@ -101,4 +101,9 @@ bool setxattr_impl(ErlNifEnv *env, const char *path, const char *name,
  */
 bool removexattr_impl(ErlNifEnv *env, const char *path, const char *name);
 
+/**
+ * Constructs Erlang tuple representing system error.
+ */
+ERL_NIF_TERM make_errno_term(ErlNifEnv *env);
+
 #endif
