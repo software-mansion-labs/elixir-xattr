@@ -5,12 +5,10 @@ ERLANG_PATH := $(shell erl -eval 'io:format("~s", [lists:concat([code:root_dir()
 CFLAGS 		+= -I$(ERLANG_PATH)
 
 SRC	:= c_src/xattr.c \
-	   c_src/impl.h \
-	   c_src/util.h \
 	   c_src/util.c \
 	   c_src/impl_xattr.c
 
-OBJ	:= $(SRC:.c=.o)
+OBJ	:= $(patsubst c_src/%.c,priv/%.o,$(SRC))
 
 ifneq ($(OS),Windows_NT)
 	CFLAGS += -fPIC
@@ -20,15 +18,18 @@ ifneq ($(OS),Windows_NT)
 	endif
 endif
 
-.PHONY: all clean
+.PHONY: all clean re
 
 all: priv/elixir_xattr.so
 
 priv/elixir_xattr.so: $(OBJ)
-	mkdir -p priv/
 	$(CC) $(CFLAGS) -shared $(LDFLAGS) $^ -o $@
+
+priv/%.o: c_src/%.c
+	$(CC) $(CFLAGS) $(CPPFLAGS) -c -o $@ $<
 
 clean:
 	$(MIX) clean
-	$(RM) -rf priv/
-	$(RM) c_src/*.o
+	$(RM) priv/elixir_xattr.so $(OBJ)
+
+re: clean all
