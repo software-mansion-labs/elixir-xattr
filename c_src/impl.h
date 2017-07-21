@@ -18,12 +18,6 @@
  *
  * \retval list On success, list of attribute names is returned.
  *              On failure, this value is left untouched.
- *
- * \retval errno
- *     E2BIG   The size of the list of extended attribute names is larger than
- *             the maximum size allowed; the list cannot be retrieved.
- *     ENOTSUP Extended attributes are not supported by the filesystem, or are
- *             disabled.
  */
 bool listxattr_impl(ErlNifEnv *env, const char *path, ERL_NIF_TERM *list);
 
@@ -37,10 +31,6 @@ bool listxattr_impl(ErlNifEnv *env, const char *path, ERL_NIF_TERM *list);
  * \retval result On success, this value is set to `true` if there is given
  *                attribute, otherwise `false`. On failure, this value is left
  *                untouched.
- *
- * \retval errno
- *     ENOTSUP Extended attributes are not supported by the filesystem, or are
- *             disabled.
  */
 bool hasxattr_impl(ErlNifEnv *env, const char *path, const char *name,
                    bool *result);
@@ -56,14 +46,6 @@ bool hasxattr_impl(ErlNifEnv *env, const char *path, const char *name,
  * \retval bin On success, attribute value is written to binary pointed by
  *             this argument, which is reallocated if needed.
  *             On failure, this value is not guaranteed to be left untouched.
- *
- * \retval errno
- *     E2BIG   The size of the attribute value is larger than the maximum
- *             size allowed; the attribute cannot be retrieved.
- *     ENODATA The named attribute does not exist, or the process has no
- *             access to this attribute.
- *     ENOTSUP Extended attributes are not supported by the filesystem, or
- *             are disabled.
  */
 bool getxattr_impl(ErlNifEnv *env, const char *path, const char *name,
                    ErlNifBinary *bin);
@@ -74,15 +56,6 @@ bool getxattr_impl(ErlNifEnv *env, const char *path, const char *name,
  *
  * \return On success, `true` is returned. On failure, `false` is returned and
  *         `errno` is set appropriately.
- *
- * \retval errno
- *     EDQUOT  Disk quota limits meant that there is insufficient space
- *             remaining to store the extended attribute.
- *     ENOSPC  There is insufficient space remaining to store the extended
- *             attribute.
- *     ENOTSUP Extended attributes are not supported by the filesystem, or
- *             are disabled,
- *     EPERM   The file is marked immutable or append-only.
  */
 bool setxattr_impl(ErlNifEnv *env, const char *path, const char *name,
                    const ErlNifBinary value);
@@ -93,11 +66,6 @@ bool setxattr_impl(ErlNifEnv *env, const char *path, const char *name,
  *
  * \return On success, `true` is returned. On failure, `false` is returned and
  *         `errno` is set appropriately.
- *
- * \retval errno
- *     ENODATA The named attribute does not exist.
- *     ENOTSUP Extended attributes are not supported by the filesystem, or
- *             are disabled,
  */
 bool removexattr_impl(ErlNifEnv *env, const char *path, const char *name);
 
