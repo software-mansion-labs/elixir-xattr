@@ -136,14 +136,18 @@ defmodule XattrTest do
     end
   end
 
-  describe "with non-existing file" do
-    test "any function should return {:error, :enoent}" do
+  for \
+    {name, fq} <- [
+      {"ls/1", quote do &Xattr.ls(&1) end},
+      {"has/2", quote do &Xattr.has(&1, "test") end},
+      {"get/2", quote do &Xattr.get(&1, "test") end},
+      {"set/3", quote do &Xattr.set(&1, "test", "hello") end},
+      {"rm/2", quote do &Xattr.rm(&1, "test") end}
+    ]
+  do
+    test "with non-existing file #{name} should return {:error, :enoent}" do
       path = "#{:erlang.unique_integer([:positive])}.test"
-      assert {:error, :enoent} == Xattr.ls(path)
-      assert {:error, :enoent} == Xattr.has(path, "test")
-      assert {:error, :enoent} == Xattr.get(path, "test")
-      assert {:error, :enoent} == Xattr.set(path, "test", "hello")
-      assert {:error, :enoent} == Xattr.rm(path, "test")
+      assert {:error, :enoent} == unquote(fq).(path)
     end
   end
 

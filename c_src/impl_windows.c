@@ -66,25 +66,18 @@ static bool utf8_to_ws(LPCSTR in, _Out_ LPWSTR *out) {
   return true;
 }
 
-static LPWSTR get_adspath(const char *path) {
+static LPWSTR get_adspath(LPCWSTR path) {
   LPWSTR buff;
-  LPWSTR wpath = NULL;
   size_t bufflen;
 
-  if (!utf8_to_ws(path, &wpath)) {
-    return NULL;
-  }
-
-  bufflen = wcslen(wpath) + 1 + ADSNAME_LENGTH + 1;
+  bufflen = wcslen(path) + 1 + ADSNAME_LENGTH + 1;
   if ((buff = enif_alloc(bufflen * sizeof(wchar_t))) == NULL) {
-    enif_free(wpath);
     SetLastError(ERR_ENIF_ALLOC);
     return NULL;
   }
 
-  StringCchPrintfW(buff, bufflen, L"%s:%s", wpath, ADSNAME);
+  StringCchPrintfW(buff, bufflen, L"%s:%s", path, ADSNAME);
 
-  enif_free(wpath);
   return buff;
 }
 
@@ -102,9 +95,21 @@ static int get_data_stream(const char *filepath, bool ro, bool create,
                            _Out_ HANDLE *file_handle) {
   DWORD last_error;
   HANDLE h;
+  LPWSTR wpath;
   LPWSTR adspath;
 
-  if ((adspath = get_adspath(filepath)) == NULL) {
+  if (!utf8_to_ws(filepath, &wpath)) {
+    return 2;
+  }
+
+  if (!file_exists(wpath)) {
+    enif_free(wpath);
+    SetLastError(ERROR_FILE_NOT_FOUND);
+    return 1;
+  }
+
+  if ((adspath = get_adspath(wpath)) == NULL) {
+    enif_free(wpath);
     return 2;
   }
 
@@ -114,6 +119,7 @@ static int get_data_stream(const char *filepath, bool ro, bool create,
                                // something likes to put 0x0 there
 
   enif_free(adspath);
+  enif_free(wpath);
 
   if (h == INVALID_HANDLE_VALUE) {
     if (!create && last_error == ERROR_FILE_NOT_FOUND) {
@@ -754,6 +760,7 @@ ERL_NIF_TERM make_errno_term(ErlNifEnv *env) {
   case ERR_ENIF_ALLOC: return make_atom(env, "badalloc");
   case ERR_INVALID_FORMAT: return make_atom(env, "invalfmt");
   case ERR_NOATTR: return make_atom(env, "enoattr");
+  case ERROR_FILE_NOT_FOUND: return make_atom(env, "enoent");
   default: return fmt_win_error(env, last_error);
   }
 }
