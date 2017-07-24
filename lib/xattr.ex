@@ -13,13 +13,10 @@ defmodule Xattr do
   functionality, and so it is to use them only to store few, short metadata which
   is not crucial to application functionality.
 
-  ## Errors
-
-  TODO:
-
   ## Implementation
 
-  Elixir Xattr is implemented as NIF library with two platform-dependent backends:
+  Elixir Xattr is implemented as NIF library with two platform-dependent
+  backends:
   * *Xattr* - Unix extended attributes supported by Linux and macOS
   * *Windows* - alternate data streams available in Windows/NTFS
 
@@ -36,10 +33,10 @@ defmodule Xattr do
 
   Attributes are stored in `ElixirXattr` data stream, which is automatically
   created when setting an attribute and the stream does not exist. They are
-  saved in simple binary format, as a contiguous list of *size:data* blocks:
+  saved in simple binary format, as a contiguous list of *size:data* cells:
 
   ```txt
-    v - name C-string size           v - value binary size
+    v - name C-string size                          v - value binary size
   +---+------------+---+-----------+---+----------+---+-------+
   | 5 | n a m e \0 | 5 | v a l u e | 4 | f o o \0 | 3 | b a r |  ...
   +---+------------+---+-----------+---+----------+---+-------+
@@ -51,6 +48,22 @@ defmodule Xattr do
 
   Unicode filenames are supported (and as such proper encoding conversions
   are performed).
+
+  ## Errors
+
+  Because of the nature of error handling on both Unix and Windows, only specific
+  error codes are translated to atoms. Other codes are stringified to some human
+  readable name, on Unix using [`strerror`](https://linux.die.net/man/3/strerror)
+  and on Windows to form `'Windows Error {hexadecimal error code}'` (Windows
+  version of strerror returns localized messages on non-English installations).
+
+  Following errors are represented as atoms and as such can be pattern matched:
+
+  * `:enoattr`  - attribute was not found
+  * `:enotsup`  - extended attributes are not supported for this file
+  * `:enoent`   - file does not exist
+  * `:invalfmt` - attributes ADS is corrupted and should be regenerated
+                  (Windows only)
   """
 
   @doc """

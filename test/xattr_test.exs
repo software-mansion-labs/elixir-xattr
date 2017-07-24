@@ -136,6 +136,17 @@ defmodule XattrTest do
     end
   end
 
+  describe "with non-existing file" do
+    test "any function should return {:error, :enoent}" do
+      path = "#{:erlang.unique_integer([:positive])}.test"
+      assert {:error, :enoent} == Xattr.ls(path)
+      assert {:error, :enoent} == Xattr.has(path, "test")
+      assert {:error, :enoent} == Xattr.get(path, "test")
+      assert {:error, :enoent} == Xattr.set(path, "test", "hello")
+      assert {:error, :enoent} == Xattr.rm(path, "test")
+    end
+  end
+
   defp new_file(_context) do
     path = "#{:erlang.unique_integer([:positive])}.test"
     do_new_file(path)
