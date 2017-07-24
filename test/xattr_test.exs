@@ -79,19 +79,74 @@ defmodule XattrTest do
       assert :ok == Xattr.set(path, "empty", "hello")
       assert {:ok, "hello"} == Xattr.get(path, "empty")
     end
+
+    test "rm(path, \"empty\") removes empty", %{path: path} do
+      assert :ok == Xattr.rm(path, "empty")
+      assert {:error, :enoattr} == Xattr.get(path, "empty")
+    end
+
+    test "rm(path, \"hello\") returns {:error, :enoattr}", %{path: path} do
+      assert {:error, :enoattr} == Xattr.rm(path, "hello")
+    end
   end
 
   describe "with foobar and empty tags" do
     setup [:new_file, :with_foobar_tags, :with_empty_tag]
 
     test "ls/1 lists all of 'em", %{path: path} do
-      assert {:ok, ["foo", "bar", "empty"]} == Xattr.ls(path)
+      assert {:ok, list} = Xattr.ls(path)
+      assert ["bar", "empty", "foo"] == Enum.sort(list)
+    end
+  end
+
+  describe "with UTF-8 file name and foobar & empty tags" do
+    setup [:new_utf8_file, :with_foobar_tags, :with_empty_tag]
+
+    test "ls/1 lists all tags", %{path: path} do
+      assert {:ok, list} = Xattr.ls(path)
+      assert ["bar", "empty", "foo"] == Enum.sort(list)
+    end
+
+    test "set(path, \"empty\", \"hello\") overrides empty", %{path: path} do
+      assert :ok == Xattr.set(path, "empty", "hello")
+      assert {:ok, "hello"} == Xattr.get(path, "empty")
+    end
+  end
+
+  describe "with UTF-8 file name and tags" do
+    setup [:new_utf8_file, :with_utf8_tags]
+
+    test "ls/1 lists all tags", %{path: path} do
+      assert {:ok, list} = Xattr.ls(path)
+      assert Enum.sort(["ᚠᛇᚻ", "Τη γλώσσα", "我能吞"]) == Enum.sort(list)
+    end
+
+    test "get/2 works", %{path: path} do
+      assert {:ok, "我能吞下玻璃而不伤身体。"} == Xattr.get(path, "我能吞")
+    end
+
+    test "set/3 works", %{path: path} do
+      assert :ok == Xattr.set(path, "我能吞", "ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ")
+      assert {:ok, "ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ"} == Xattr.get(path, "我能吞")
+    end
+
+    test "rm/2 works", %{path: path} do
+      assert :ok == Xattr.rm(path, "Τη γλώσσα")
+      assert {:error, :enoattr} == Xattr.get(path, "Τη γλώσσα")
     end
   end
 
   defp new_file(_context) do
     path = "#{:erlang.unique_integer([:positive])}.test"
+    do_new_file(path)
+  end
 
+  defp new_utf8_file(_context) do
+    path = "#{:erlang.unique_integer([:positive])}_சுப்ரமணிய.test"
+    do_new_file(path)
+  end
+
+  defp do_new_file(path) do
     File.open!(path, [:read, :write], fn file ->
       IO.write(file, "hello world!")
     end)
@@ -111,6 +166,13 @@ defmodule XattrTest do
 
   defp with_empty_tag(%{path: path}) do
     :ok = Xattr.set(path, "empty", "")
+    {:ok, [path: path]}
+  end
+
+  defp with_utf8_tags(%{path: path}) do
+    :ok = Xattr.set(path, "ᚠᛇᚻ", "ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ")
+    :ok = Xattr.set(path, "Τη γλώσσα", "Τη γλώσσα μου έδωσαν ελληνική")
+    :ok = Xattr.set(path, "我能吞", "我能吞下玻璃而不伤身体。")
     {:ok, [path: path]}
   end
 end

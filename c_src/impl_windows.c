@@ -654,7 +654,7 @@ bool setxattr_impl(ErlNifEnv *env, const char *path, const char *name,
   if (result == 0) {
     // Xattr stream exists
 
-    // Move attribute to end of file and trucate file just before this attr.
+    // Move attribute to end of file so we can easily overwrite it.
     if (!move_attr_to_end(ds, name)) {
       last_error = GetLastError();
       if (last_error != ERR_NOATTR) {
@@ -703,7 +703,7 @@ bool removexattr_impl(ErlNifEnv *env, const char *path, const char *name) {
   if (result == 0) {
     // Xattr stream exists
 
-    // Move attribute to end of file and trucate file just before this attr.
+    // Move attribute to end of file and truncate file just before this attr.
     if (!move_attr_to_end(ds, name)) {
       last_error = GetLastError();
       CloseHandle(ds);

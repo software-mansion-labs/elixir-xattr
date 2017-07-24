@@ -4,10 +4,7 @@ defmodule Xattr do
   @spec ls(Path.t) :: {:ok, list(String.t)} | {:error, term}
   def ls(path) do
     path = IO.chardata_to_string(path) <> <<0>>
-    case listxattr_nif(path) do
-      {:ok, list} -> {:ok, Enum.reverse(list)}
-      err         -> err
-    end
+    listxattr_nif(path)
   end
 
   @spec has(Path.t, name :: String.t) :: {:ok, boolean} | {:error, term}
