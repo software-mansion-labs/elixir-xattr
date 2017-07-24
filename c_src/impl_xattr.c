@@ -8,7 +8,7 @@
 #include <sys/types.h>
 #include <sys/xattr.h>
 
-#define NSUSER_PREFIX ("user.")
+#define NSUSER_PREFIX ("user.ElixirXattr.")
 #define NSUSER_LENGTH (sizeof(NSUSER_PREFIX) / sizeof(char) - 1)
 
 #define TO_BOOL(result) ((result == 0) ? true : false)
