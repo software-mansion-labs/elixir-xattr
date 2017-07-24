@@ -1,15 +1,34 @@
 # Elixir Xattr
 
-A library for accessing and manipulating custom [extended filesystem attributes](https://en.wikipedia.org/wiki/Extended_file_attributes). Main goals are to provide straightforward API and portability, both Windows (ADS) and Unix (xattr) platforms are supported.
+A library for accessing and manipulating **custom** [extended filesystem attributes](https://en.wikipedia.org/wiki/Extended_file_attributes). Main goals are to provide straightforward API and portability, both Windows (ADS) and Unix (xattr) platforms are supported.
 
-This library doesn't aim at supporting platform specific features, e.g. there is no (and won't be) possiblitity to access attributes from other namespaces than `user.` on Linux.
+This library doesn't aim to be general extended filesystem attributes library, because implementation details greately differ between supported platforms. Rather, it focuses on providing portable way for client application to store and read some metadata in files. Attributes are stored in isolation, in *xattr* backend in `user.ElixirXattr` namespace and in *Windows* backend in `ElixirXattr` data stream. For details see *Implementation* section in module docs.
+
+## Example
+
+```elixir
+iex(1)> File.touch!("foo.txt")
+:ok
+iex(2)> Xattr.set("foo.txt", "hello", "world")
+:ok
+iex(3)> Xattr.get("foo.txt", "hello")
+{:ok, "world"}
+iex(4)> Xattr.set("foo.txt", "foo", "bar")
+:ok
+iex(5)> Xattr.ls("foo.txt")
+{:ok, ["hello", "foo"]}
+iex(6)> Xattr.rm("foo.txt", "hello")
+:ok
+iex(7)> Xattr.ls("foo.txt")
+{:ok, ["foo"]}
+```
 
 ## Installation
 
-The package can be installed by adding `elixir_xattr` to your list of dependencies in `mix.exs`:
+The package can be installed by adding `xattr` to your list of dependencies in `mix.exs`:
 
 ```elixir
 def deps do
-  [{:elixir_xattr, "~> 0.1.0"}]
+  [{:xattr, "~> 0.1.0"}]
 end
 ```
