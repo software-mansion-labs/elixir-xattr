@@ -43,7 +43,7 @@ defmodule Xattr.Mixfile do
 
   defp package() do
     [
-      files: ~w(c_src lib README.md LICENSE.md),
+      files: ~w(c_src lib priv/.gitignore Makefile Makefile.win mix.exs README.md LICENSE.md),
       maintainers: ["Marek Kaput <marek.kaput@swmansion.com>"],
       licenses: ["MIT"],
       links: %{"GitHub" => "https://github.com/SoftwareMansion/elixir-xattr"}
