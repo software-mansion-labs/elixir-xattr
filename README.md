@@ -32,6 +32,6 @@ The package can be installed by adding `xattr` to your list of dependencies in `
 
 ```elixir
 def deps do
-  [{:xattr, "~> 0.1.0"}]
+  [{:xattr, "~> 0.1"}]
 end
 ```
