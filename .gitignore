@@ -10,3 +10,5 @@ erl_crash.dump
 Makefile.auto.win
 mix.lock
 *.test
+*.iml
+.idea/
