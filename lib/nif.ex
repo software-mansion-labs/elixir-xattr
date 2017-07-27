@@ -7,7 +7,7 @@ defmodule Xattr.Nif do
 
   defp init do
     path = Path.join(:code.priv_dir(unquote(app)), "elixir_xattr")
-    :erlang.load_nif(path, 0)
+    :erlang.load_nif(String.to_charlist(path), 0)
   end
 
   @spec listxattr_nif(binary) :: {:ok, list(binary)} | {:error, term}
