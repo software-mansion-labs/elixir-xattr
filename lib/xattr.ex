@@ -46,8 +46,20 @@ defmodule Xattr do
   Both names nor values are not processed and stored as-is, that means names
   and values (if strings) are UTF-8 encoded.
 
+  ### Unicode
+
   Unicode filenames are supported (and as such proper encoding conversions
-  are performed).
+  are performed when needed).
+
+  ### Attribute name types
+
+  Because attribute names can be represented by various Erlang types, they
+  are prefixed with *type tags* during serialization:
+  * `a$` - atoms
+  * `s$` - name
+
+  For example, given Xattr backend, call `Xattr.set("foo.txt", "example", "value")`
+  will create `user.ElixirXattr.s$example` extended attribute on file `foo.txt`.
 
   ## Errors
 
@@ -62,9 +74,13 @@ defmodule Xattr do
   * `:enoattr`  - attribute was not found
   * `:enotsup`  - extended attributes are not supported for this file
   * `:enoent`   - file does not exist
-  * `:invalfmt` - attributes ADS is corrupted and should be regenerated
-                  (Windows only)
+  * `:invalfmt` - attribute storage is corrupted and should be regenerated
   """
+
+  @tag_atom "a$"
+  @tag_str  "s$"
+
+  @type name_t :: String.t | atom
 
   @doc """
   Lists names of all extended attributes of `path`.
@@ -75,14 +91,16 @@ defmodule Xattr do
   ## Example
 
       Xattr.set("foo.txt", "hello", "world")
-      Xattr.set("foo.txt", "foo", "bar")
+      Xattr.set("foo.txt", :foo, "bar")
       {:ok, list} = Xattr.ls("foo.txt")
-      # list should be permutation of ["hello", "foo"]
+      # list should be permutation of ["hello", :foo]
   """
-  @spec ls(Path.t) :: {:ok, list(String.t)} | {:error, term}
+  @spec ls(Path.t) :: {:ok, list(name_t)} | {:error, term}
   def ls(path) do
     path = IO.chardata_to_string(path) <> <<0>>
-    listxattr_nif(path)
+    with {:ok, lst} <- listxattr_nif(path) do
+      decode_list(lst)
+    end
   end
 
   @doc """
@@ -92,12 +110,12 @@ defmodule Xattr do
 
       Xattr.set("foo.txt", "hello", "world")
       Xattr.has("foo.txt", "hello") == {:ok, true}
-      Xattr.has("foo.txt", "foo") == {:ok, false}
+      Xattr.has("foo.txt", :foo) == {:ok, false}
   """
-  @spec has(Path.t, name :: String.t) :: {:ok, boolean} | {:error, term}
-  def has(path, name) do
+  @spec has(Path.t, name :: name_t) :: {:ok, boolean} | {:error, term}
+  def has(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
-    name = name <> <<0>>
+    name = encode_name(name) <> <<0>>
     hasxattr_nif(path, name)
   end
 
@@ -110,12 +128,12 @@ defmodule Xattr do
 
       Xattr.set("foo.txt", "hello", "world")
       Xattr.get("foo.txt", "hello") == {:ok, "world"}
-      Xattr.get("foo.txt", "foo") == {:error, :enoattr}
+      Xattr.get("foo.txt", :foo) == {:error, :enoattr}
   """
-  @spec get(Path.t, name :: String.t) :: {:ok, binary} | {:error, term}
-  def get(path, name) do
+  @spec get(Path.t, name :: name_t) :: {:ok, binary} | {:error, term}
+  def get(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
-    name = name <> <<0>>
+    name = encode_name(name) <> <<0>>
     getxattr_nif(path, name)
   end
 
@@ -129,14 +147,12 @@ defmodule Xattr do
       Xattr.set("foo.txt", "hello", "world")
       Xattr.get("foo.txt", "hello") == {:ok, "world"}
   """
-  @spec set(
-    Path.t,
-    name :: String.t,
-    value :: binary
-  ) :: :ok | {:error, term}
-  def set(path, name, value) do
+  @spec set(Path.t, name :: name_t, value :: binary) :: :ok | {:error, term}
+  def set(path, name, value)
+    when (is_binary(name) or is_atom(name)) and is_binary(value)
+  do
     path = IO.chardata_to_string(path) <> <<0>>
-    name = name <> <<0>>
+    name = encode_name(name) <> <<0>>
     setxattr_nif(path, name, value)
   end
 
@@ -148,14 +164,45 @@ defmodule Xattr do
   ## Example
 
       Xattr.set("foo.txt", "hello", "world")
-      Xattr.set("foo.txt", "foo", "bar")
+      Xattr.set("foo.txt", :foo, "bar")
       Xattr.rm("foo.txt", "foo")
       {:ok, ["hello"]} = Xattr.ls("foo.txt")
   """
-  @spec rm(Path.t, name :: String.t) :: :ok | {:error, term}
-  def rm(path, name) do
+  @spec rm(Path.t, name :: name_t) :: :ok | {:error, term}
+  def rm(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
-    name = name <> <<0>>
+    name = encode_name(name) <> <<0>>
     removexattr_nif(path, name)
+  end
+
+  defp encode_name(name) when is_atom(name) do
+    @tag_atom <> to_string(name)
+  end
+  defp encode_name(name) when is_binary(name) do
+    @tag_str <> name
+  end
+
+  defp decode_name(@tag_atom <> bin) do
+    {:ok, String.to_atom(bin)}
+  end
+  defp decode_name(@tag_str <> bin) do
+    {:ok, bin}
+  end
+  defp decode_name(_) do
+    {:error, :invalfmt}
+  end
+
+  defp decode_list(lst) do
+    decode_list(lst, {:ok, []})
+  end
+
+  defp decode_list([], acc) do
+    acc
+  end
+  defp decode_list([name_enc|rest], {:ok, lst}) do
+    case decode_name(name_enc) do
+      {:ok, name} -> decode_list(rest, {:ok, [name|lst]})
+      err         -> err
+    end
   end
 end

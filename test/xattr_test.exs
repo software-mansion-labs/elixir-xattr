@@ -155,6 +155,33 @@ defmodule XattrTest do
     end
   end
 
+  describe "with atom attributes" do
+    setup [:new_file, :with_atom_attrs]
+
+    test "ls/1 lists all attrs", %{path: path} do
+      assert {:ok, list} = Xattr.ls(path)
+      assert Enum.sort([:abc, Foo.Bar, :'Hello World\n']) == Enum.sort(list)
+    end
+
+    test "has/2 works", %{path: path} do
+      assert Xattr.has(path, :abc)
+    end
+
+    test "get/2 works", %{path: path} do
+      assert {:ok, "abc"} == Xattr.get(path, :abc)
+    end
+
+    test "set/3 works", %{path: path} do
+      assert :ok == Xattr.set(path, :abc, "Hello World!")
+      assert {:ok, "Hello World!"} == Xattr.get(path, :abc)
+    end
+
+    test "rm/2 works", %{path: path} do
+      assert :ok == Xattr.rm(path, Foo.Bar)
+      assert {:error, :enoattr} == Xattr.get(path, Foo.Bar)
+    end
+  end
+
   defp new_file(_context) do
     path = "#{:erlang.unique_integer([:positive])}.test"
     do_new_file(path)
@@ -192,6 +219,13 @@ defmodule XattrTest do
     :ok = Xattr.set(path, "ᚠᛇᚻ", "ᚠᛇᚻ᛫ᛒᛦᚦ᛫ᚠᚱᚩᚠᚢᚱ᛫ᚠᛁᚱᚪ᛫ᚷᛖᚻᚹᛦᛚᚳᚢᛗ")
     :ok = Xattr.set(path, "Τη γλώσσα", "Τη γλώσσα μου έδωσαν ελληνική")
     :ok = Xattr.set(path, "我能吞", "我能吞下玻璃而不伤身体。")
+    {:ok, [path: path]}
+  end
+
+  defp with_atom_attrs(%{path: path}) do
+    :ok = Xattr.set(path, :abc, "abc")
+    :ok = Xattr.set(path, Foo.Bar, "foobar")
+    :ok = Xattr.set(path, :'Hello World\n', "Hello World\n")
     {:ok, [path: path]}
   end
 end
