@@ -121,6 +121,10 @@ defmodule XattrTest do
       assert Enum.sort(["ᚠᛇᚻ", "Τη γλώσσα", "我能吞"]) == Enum.sort(list)
     end
 
+    test "has/2 works", %{path: path} do
+      assert Xattr.has(path, "我能吞")
+    end
+
     test "get/2 works", %{path: path} do
       assert {:ok, "我能吞下玻璃而不伤身体。"} == Xattr.get(path, "我能吞")
     end
