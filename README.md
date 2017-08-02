@@ -16,14 +16,14 @@ iex(2)> Xattr.set("foo.txt", "hello", "world")
 :ok
 iex(3)> Xattr.get("foo.txt", "hello")
 {:ok, "world"}
-iex(4)> Xattr.set("foo.txt", "foo", "bar")
+iex(4)> Xattr.set("foo.txt", :atoms_also_work, "bar")
 :ok
 iex(5)> Xattr.ls("foo.txt")
-{:ok, ["hello", "foo"]}
+{:ok, ["hello", :atoms_also_work]}
 iex(6)> Xattr.rm("foo.txt", "hello")
 :ok
 iex(7)> Xattr.ls("foo.txt")
-{:ok, ["foo"]}
+{:ok, [:atoms_also_work]}
 ```
 
 ## Installation
@@ -35,3 +35,10 @@ def deps do
   [{:xattr, "~> 0.1"}]
 end
 ```
+
+
+## License
+
+See the [LICENSE] file for license rights and limitations (MIT).
+
+[LICENSE]: https://github.com/SoftwareMansion/elixir-xattr/blob/master/LICENSE.txt

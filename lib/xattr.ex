@@ -43,13 +43,12 @@ defmodule Xattr do
         ^ - name C-string, note \0 suffix               ^ - value binary data
   ```
 
-  Both names nor values are not processed and stored as-is, that means names
-  and values (if strings) are UTF-8 encoded.
-
   ### Unicode
 
   Unicode filenames are supported (and as such proper encoding conversions
   are performed when needed).
+
+  Both names nor values are not processed and stored as-is.
 
   ### Attribute name types
 

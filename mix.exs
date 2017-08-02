@@ -15,7 +15,7 @@ defmodule Xattr.Mixfile do
       docs: [
         source_ref: "v#{@version}",
         main: "readme",
-        extras: ~w(README.md LICENSE.md CHANGELOG.md)
+        extras: ~w(README.md CHANGELOG.md)
       ],
       deps: deps(),
       package: package()
@@ -51,7 +51,6 @@ defmodule Xattr.Mixfile do
         Makefile.win
         mix.exs
         README.md
-        LICENSE.md
         CHANGELOG.md
       ),
       maintainers: ["Marek Kaput <marek.kaput@swmansion.com>"],
