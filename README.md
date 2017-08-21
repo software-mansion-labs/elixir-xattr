@@ -32,7 +32,7 @@ The package can be installed by adding `xattr` to your list of dependencies in `
 
 ```elixir
 def deps do
-  [{:xattr, "~> 0.2"}]
+  [{:xattr, "~> 0.3"}]
 end
 ```
 
