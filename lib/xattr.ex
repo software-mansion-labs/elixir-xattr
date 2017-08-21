@@ -60,6 +60,12 @@ defmodule Xattr do
   For example, given Xattr backend, call `Xattr.set("foo.txt", "example", "value")`
   will create `user.ElixirXattr.s$example` extended attribute on file `foo.txt`.
 
+  ### Extended attributes & file system links
+
+  On both Unix and Windows implementations, attribute storage is attached to
+  file system data, not file/link entries. Therefore attributes are shared
+  between all hard links / file and its symlinks.
+
   ## Errors
 
   Because of the nature of error handling on both Unix and Windows, only specific
