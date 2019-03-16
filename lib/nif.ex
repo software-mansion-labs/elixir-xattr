@@ -5,7 +5,7 @@ defmodule Xattr.Nif do
 
   app = Mix.Project.config[:app]
 
-  defp init do
+  def init do
     path = Path.join(:code.priv_dir(unquote(app)), "elixir_xattr")
     :erlang.load_nif(String.to_charlist(path), 0)
   end
