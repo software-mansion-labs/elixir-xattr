@@ -10,7 +10,7 @@ defmodule Xattr.Mixfile do
       description: description(),
       version: @version,
       elixir: "~> 1.4",
-      compilers: [:elixir_make] ++ Mix.compilers,
+      compilers: [:elixir_make] ++ Mix.compilers(),
       source_url: "https://github.com/SoftwareMansion/elixir-xattr",
       docs: [
         source_ref: "v#{@version}",

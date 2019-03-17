@@ -26,8 +26,7 @@ defmodule XattrTest do
     setup [:new_file, :with_foobar_attrs]
 
     test "rm(path, \"foo\") removes this xattr and only \"bar\" remains",
-      %{path: path}
-    do
+         %{path: path} do
       assert :ok == Xattr.rm(path, "foo")
       assert {:ok, ["bar"]} == Xattr.ls(path)
     end
@@ -140,15 +139,28 @@ defmodule XattrTest do
     end
   end
 
-  for \
-    {name, fq} <- [
-      {"ls/1", quote do &Xattr.ls(&1) end},
-      {"has/2", quote do &Xattr.has(&1, "test") end},
-      {"get/2", quote do &Xattr.get(&1, "test") end},
-      {"set/3", quote do &Xattr.set(&1, "test", "hello") end},
-      {"rm/2", quote do &Xattr.rm(&1, "test") end}
-    ]
-  do
+  for {name, fq} <- [
+        {"ls/1",
+         quote do
+           &Xattr.ls(&1)
+         end},
+        {"has/2",
+         quote do
+           &Xattr.has(&1, "test")
+         end},
+        {"get/2",
+         quote do
+           &Xattr.get(&1, "test")
+         end},
+        {"set/3",
+         quote do
+           &Xattr.set(&1, "test", "hello")
+         end},
+        {"rm/2",
+         quote do
+           &Xattr.rm(&1, "test")
+         end}
+      ] do
     test "with non-existing file #{name} should return {:error, :enoent}" do
       path = "#{:erlang.unique_integer([:positive])}.test"
       assert {:error, :enoent} == unquote(fq).(path)
@@ -160,7 +172,7 @@ defmodule XattrTest do
 
     test "ls/1 lists all attrs", %{path: path} do
       assert {:ok, list} = Xattr.ls(path)
-      assert Enum.sort([:abc, Foo.Bar, :'Hello World\n']) == Enum.sort(list)
+      assert Enum.sort([:abc, Foo.Bar, :"Hello World\n"]) == Enum.sort(list)
     end
 
     test "has/2 works", %{path: path} do
@@ -197,9 +209,9 @@ defmodule XattrTest do
       IO.write(file, "hello world!")
     end)
 
-    on_exit fn ->
+    on_exit(fn ->
       File.rm!(path)
-    end
+    end)
 
     {:ok, [path: path]}
   end
@@ -225,7 +237,7 @@ defmodule XattrTest do
   defp with_atom_attrs(%{path: path}) do
     :ok = Xattr.set(path, :abc, "abc")
     :ok = Xattr.set(path, Foo.Bar, "foobar")
-    :ok = Xattr.set(path, :'Hello World\n', "Hello World\n")
+    :ok = Xattr.set(path, :"Hello World\n", "Hello World\n")
     {:ok, [path: path]}
   end
 end

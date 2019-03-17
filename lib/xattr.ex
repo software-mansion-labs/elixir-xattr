@@ -83,9 +83,9 @@ defmodule Xattr do
   """
 
   @tag_atom "a$"
-  @tag_str  "s$"
+  @tag_str "s$"
 
-  @type name_t :: String.t | atom
+  @type name_t :: String.t() | atom
 
   @doc """
   Lists names of all extended attributes of `path`.
@@ -100,9 +100,10 @@ defmodule Xattr do
       {:ok, list} = Xattr.ls("foo.txt")
       # list should be permutation of ["hello", :foo]
   """
-  @spec ls(Path.t) :: {:ok, [name_t]} | {:error, term}
+  @spec ls(Path.t()) :: {:ok, [name_t]} | {:error, term}
   def ls(path) do
     path = IO.chardata_to_string(path) <> <<0>>
+
     with {:ok, lst} <- listxattr_nif(path) do
       decode_list(lst)
     end
@@ -111,12 +112,15 @@ defmodule Xattr do
   @doc """
   The same as `ls/1`, but raises an exception if it fails.
   """
-  @spec ls!(Path.t) :: [name_t] | no_return
+  @spec ls!(Path.t()) :: [name_t] | no_return
   def ls!(path) do
     case ls(path) do
-      {:ok, result}    -> result
+      {:ok, result} ->
+        result
+
       {:error, reason} ->
-        raise Xattr.Error, reason: reason,
+        raise Xattr.Error,
+          reason: reason,
           action: "list all extended attributes of",
           path: IO.chardata_to_string(path)
     end
@@ -131,7 +135,7 @@ defmodule Xattr do
       Xattr.has("foo.txt", "hello") == {:ok, true}
       Xattr.has("foo.txt", :foo) == {:ok, false}
   """
-  @spec has(Path.t, name :: name_t) :: {:ok, boolean} | {:error, term}
+  @spec has(Path.t(), name :: name_t) :: {:ok, boolean} | {:error, term}
   def has(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
     name = encode_name(name) <> <<0>>
@@ -141,12 +145,15 @@ defmodule Xattr do
   @doc """
   The same as `has/2`, but raises an exception if it fails.
   """
-  @spec has!(Path.t, name :: name_t) :: boolean | no_return
+  @spec has!(Path.t(), name :: name_t) :: boolean | no_return
   def has!(path, name) do
     case has(path, name) do
-      {:ok, result}    -> result
+      {:ok, result} ->
+        result
+
       {:error, reason} ->
-        raise Xattr.Error, reason: reason,
+        raise Xattr.Error,
+          reason: reason,
           action: "check attribute existence of",
           path: IO.chardata_to_string(path)
     end
@@ -163,7 +170,7 @@ defmodule Xattr do
       Xattr.get("foo.txt", "hello") == {:ok, "world"}
       Xattr.get("foo.txt", :foo) == {:error, :enoattr}
   """
-  @spec get(Path.t, name :: name_t) :: {:ok, binary} | {:error, term}
+  @spec get(Path.t(), name :: name_t) :: {:ok, binary} | {:error, term}
   def get(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
     name = encode_name(name) <> <<0>>
@@ -173,12 +180,15 @@ defmodule Xattr do
   @doc """
   The same as `get/2`, but raises an exception if it fails.
   """
-  @spec get!(Path.t, name :: name_t) :: binary | no_return
+  @spec get!(Path.t(), name :: name_t) :: binary | no_return
   def get!(path, name) do
     case get(path, name) do
-      {:ok, result}    -> result
+      {:ok, result} ->
+        result
+
       {:error, reason} ->
-        raise Xattr.Error, reason: reason,
+        raise Xattr.Error,
+          reason: reason,
           action: "get attribute of",
           path: IO.chardata_to_string(path)
     end
@@ -194,10 +204,9 @@ defmodule Xattr do
       Xattr.set("foo.txt", "hello", "world")
       Xattr.get("foo.txt", "hello") == {:ok, "world"}
   """
-  @spec set(Path.t, name :: name_t, value :: binary) :: :ok | {:error, term}
+  @spec set(Path.t(), name :: name_t, value :: binary) :: :ok | {:error, term}
   def set(path, name, value)
-    when (is_binary(name) or is_atom(name)) and is_binary(value)
-  do
+      when (is_binary(name) or is_atom(name)) and is_binary(value) do
     path = IO.chardata_to_string(path) <> <<0>>
     name = encode_name(name) <> <<0>>
     setxattr_nif(path, name, value)
@@ -206,12 +215,15 @@ defmodule Xattr do
   @doc """
   The same as `set/3`, but raises an exception if it fails.
   """
-  @spec set!(Path.t, name :: name_t, value :: binary) :: :ok | no_return
+  @spec set!(Path.t(), name :: name_t, value :: binary) :: :ok | no_return
   def set!(path, name, value) do
     case set(path, name, value) do
-      :ok              -> :ok
+      :ok ->
+        :ok
+
       {:error, reason} ->
-        raise Xattr.Error, reason: reason,
+        raise Xattr.Error,
+          reason: reason,
           action: "remove attribute of",
           path: IO.chardata_to_string(path)
     end
@@ -229,7 +241,7 @@ defmodule Xattr do
       Xattr.rm("foo.txt", "foo")
       {:ok, ["hello"]} = Xattr.ls("foo.txt")
   """
-  @spec rm(Path.t, name :: name_t) :: :ok | {:error, term}
+  @spec rm(Path.t(), name :: name_t) :: :ok | {:error, term}
   def rm(path, name) when is_binary(name) or is_atom(name) do
     path = IO.chardata_to_string(path) <> <<0>>
     name = encode_name(name) <> <<0>>
@@ -239,12 +251,15 @@ defmodule Xattr do
   @doc """
   The same as `rm/2`, but raises an exception if it fails.
   """
-  @spec rm!(Path.t, name :: name_t) :: :ok | no_return
+  @spec rm!(Path.t(), name :: name_t) :: :ok | no_return
   def rm!(path, name) do
     case rm(path, name) do
-      :ok              -> :ok
+      :ok ->
+        :ok
+
       {:error, reason} ->
-        raise Xattr.Error, reason: reason,
+        raise Xattr.Error,
+          reason: reason,
           action: "remove attribute of",
           path: IO.chardata_to_string(path)
     end
@@ -253,6 +268,7 @@ defmodule Xattr do
   defp encode_name(name) when is_atom(name) do
     @tag_atom <> to_string(name)
   end
+
   defp encode_name(name) when is_binary(name) do
     @tag_str <> name
   end
@@ -260,9 +276,11 @@ defmodule Xattr do
   defp decode_name(@tag_atom <> bin) do
     {:ok, String.to_atom(bin)}
   end
+
   defp decode_name(@tag_str <> bin) do
     {:ok, bin}
   end
+
   defp decode_name(_) do
     {:error, :invalfmt}
   end
@@ -274,10 +292,11 @@ defmodule Xattr do
   defp decode_list([], acc) do
     acc
   end
-  defp decode_list([name_enc|rest], {:ok, lst}) do
+
+  defp decode_list([name_enc | rest], {:ok, lst}) do
     case decode_name(name_enc) do
-      {:ok, name} -> decode_list(rest, {:ok, [name|lst]})
-      err         -> err
+      {:ok, name} -> decode_list(rest, {:ok, [name | lst]})
+      err -> err
     end
   end
 end
@@ -287,19 +306,21 @@ defmodule Xattr.Error do
 
   def message(%{action: action, reason: reason, path: path}) do
     formatted = fmt(action, reason)
-    "could not #{action} #{inspect path}: #{formatted}"
+    "could not #{action} #{inspect(path)}: #{formatted}"
   end
 
   defp fmt(_action, :enoattr) do
     "no such attribute"
   end
+
   defp fmt(_action, :invalfmt) do
     "corrupted attribute data"
   end
+
   defp fmt(_action, reason) do
     case IO.iodata_to_binary(:file.format_error(reason)) do
       "unknown POSIX error" <> _ -> inspect(reason)
-      formatted_reason           -> formatted_reason
+      formatted_reason -> formatted_reason
     end
   end
 end

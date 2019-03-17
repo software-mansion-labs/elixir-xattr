@@ -3,7 +3,7 @@ defmodule Xattr.Nif do
 
   @moduledoc false
 
-  app = Mix.Project.config[:app]
+  app = Mix.Project.config()[:app]
 
   def init do
     path = Path.join(:code.priv_dir(unquote(app)), "elixir_xattr")
