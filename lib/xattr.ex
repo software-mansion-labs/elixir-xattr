@@ -23,8 +23,9 @@ defmodule Xattr do
   ### Xattr
 
   This backed works as an Erlang wrapper for [`xattr(7)`](http://man7.org/linux/man-pages/man7/xattr.7.html)
-  functionality available in Unix world. Attributes are always prefixed with
-  `user.ElixirXattr` namespace.
+  functionality available in Unix world. Non-prefixed attributes are prefixed with the
+  `user.ElixirXattr` namespace. Specifying a fully qualified attribute name
+  as a string is passed directly to [`xattr(7)`](http://man7.org/linux/man-pages/man7/xattr.7.html).
 
   ### Windows
 
@@ -36,7 +37,7 @@ defmodule Xattr do
   saved in simple binary format, as a contiguous list of *size:data* cells:
 
   ```txt
-    v - name C-string size                          v - value binary size
+    v - name C-string size uint32                   v - value binary size uint32
   +---+------------+---+-----------+---+----------+---+-------+
   | 5 | n a m e \0 | 5 | v a l u e | 4 | f o o \0 | 3 | b a r |  ...
   +---+------------+---+-----------+---+----------+---+-------+
@@ -46,9 +47,9 @@ defmodule Xattr do
   ### Unicode
 
   Unicode filenames are supported (and as such proper encoding conversions
-  are performed when needed).
+  are performed when needed), provided they don't have a null character.
 
-  Both names nor values are not processed and stored as-is.
+  Neither names nor values are processed, but stored as-is.
 
   ### Attribute name types
 
@@ -58,13 +59,20 @@ defmodule Xattr do
   * `s$` - name
 
   For example, given Xattr backend, call `Xattr.set("foo.txt", "example", "value")`
-  will create `user.ElixirXattr.s$example` extended attribute on file `foo.txt`.
+  will create the `user.ElixirXattr.s$example` extended attribute on file `foo.txt`.
+
+  Atoms are always encoded in this manner, but if a string is in the format
+  `namespace.attribute` then it is not encoded, and assumed to be a raw filesystem
+  attribute name: `Xattr.set("foo.txt", "user.example", "value")`
+  will create the `user.example` extended attribute on file `foo.txt`.
+
 
   ### Extended attributes & file system links
 
-  On both Unix and Windows implementations, attribute storage is attached to
+  On both of the Unix and Windows implementations, attribute storage is attached to
   file system data, not file/link entries. Therefore attributes are shared
-  between all hard links / file and its symlinks.
+  between all hard links / file. This implementation always operates directly
+  on symlinks, you must pass the target of the symlink to operate on it.
 
   ## Errors
 
@@ -79,11 +87,18 @@ defmodule Xattr do
   * `:enoattr`  - attribute was not found
   * `:enotsup`  - extended attributes are not supported for this file
   * `:enoent`   - file does not exist
+  * `:eperm`    - permission denied
+  * `:e2big`    - name too big
+  * `:enospc`   - not enough space (value too big)
   * `:invalfmt` - attribute storage is corrupted and should be regenerated
   """
 
   @tag_atom "a$"
   @tag_str "s$"
+
+  @user_prefix "user.ElixirXattr."
+
+  @xattr_native xattr_native_nif()
 
   @type name_t :: String.t() | atom
 
@@ -102,7 +117,7 @@ defmodule Xattr do
   """
   @spec ls(Path.t()) :: {:ok, [name_t]} | {:error, term}
   def ls(path) do
-    path = IO.chardata_to_string(path) <> <<0>>
+    path = IO.chardata_to_string(path)
 
     with {:ok, lst} <- listxattr_nif(path) do
       decode_list(lst)
@@ -137,8 +152,8 @@ defmodule Xattr do
   """
   @spec has(Path.t(), name :: name_t) :: {:ok, boolean} | {:error, term}
   def has(path, name) when is_binary(name) or is_atom(name) do
-    path = IO.chardata_to_string(path) <> <<0>>
-    name = encode_name(name) <> <<0>>
+    path = IO.chardata_to_string(path)
+    name = encode_name(name)
     hasxattr_nif(path, name)
   end
 
@@ -172,8 +187,8 @@ defmodule Xattr do
   """
   @spec get(Path.t(), name :: name_t) :: {:ok, binary} | {:error, term}
   def get(path, name) when is_binary(name) or is_atom(name) do
-    path = IO.chardata_to_string(path) <> <<0>>
-    name = encode_name(name) <> <<0>>
+    path = IO.chardata_to_string(path)
+    name = encode_name(name)
     getxattr_nif(path, name)
   end
 
@@ -207,8 +222,8 @@ defmodule Xattr do
   @spec set(Path.t(), name :: name_t, value :: binary) :: :ok | {:error, term}
   def set(path, name, value)
       when (is_binary(name) or is_atom(name)) and is_binary(value) do
-    path = IO.chardata_to_string(path) <> <<0>>
-    name = encode_name(name) <> <<0>>
+    path = IO.chardata_to_string(path)
+    name = encode_name(name)
     setxattr_nif(path, name, value)
   end
 
@@ -243,8 +258,8 @@ defmodule Xattr do
   """
   @spec rm(Path.t(), name :: name_t) :: :ok | {:error, term}
   def rm(path, name) when is_binary(name) or is_atom(name) do
-    path = IO.chardata_to_string(path) <> <<0>>
-    name = encode_name(name) <> <<0>>
+    path = IO.chardata_to_string(path)
+    name = encode_name(name)
     removexattr_nif(path, name)
   end
 
@@ -266,22 +281,46 @@ defmodule Xattr do
   end
 
   defp encode_name(name) when is_atom(name) do
-    @tag_atom <> to_string(name)
+	if @xattr_native do
+		@user_prefix <> @tag_atom <> to_string(name)
+	else
+		@tag_atom <> to_string(name)
+	end
   end
 
   defp encode_name(name) when is_binary(name) do
-    @tag_str <> name
+	if @xattr_native do
+		if name =~ "." do
+			name
+		else
+			@user_prefix <> @tag_str <> name
+		end
+	else
+		@tag_str <> name
+	end
   end
 
-  defp decode_name(@tag_atom <> bin) do
+  defp decode_name(@user_prefix <> @tag_atom <> bin, true) do
     {:ok, String.to_atom(bin)}
   end
 
-  defp decode_name(@tag_str <> bin) do
+  defp decode_name(@user_prefix <> @tag_str <> bin, true) do
     {:ok, bin}
   end
 
-  defp decode_name(_) do
+  defp decode_name(@tag_atom <> bin, _) do
+    {:ok, String.to_atom(bin)}
+  end
+
+  defp decode_name(@tag_str <> bin, _) do
+    {:ok, bin}
+  end
+
+  defp decode_name(bin, true) do
+    {:ok, bin}
+  end
+
+  defp decode_name(_, false) do
     {:error, :invalfmt}
   end
 
@@ -294,7 +333,7 @@ defmodule Xattr do
   end
 
   defp decode_list([name_enc | rest], {:ok, lst}) do
-    case decode_name(name_enc) do
+    case decode_name(name_enc, @xattr_native) do
       {:ok, name} -> decode_list(rest, {:ok, [name | lst]})
       err -> err
     end

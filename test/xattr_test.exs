@@ -19,6 +19,27 @@ defmodule XattrTest do
     test "set(path, \"hello\", ...) creates new attr", %{path: path} do
       assert :ok == Xattr.set(path, "hello", "world")
       assert {:ok, "world"} == Xattr.get(path, "hello")
+	end
+  end
+
+  describe "with no file" do
+    setup [:no_file]
+
+    test "ls/1 errors", %{path: path} do
+      assert {:error, :enoent} == Xattr.ls(path)
+    end
+
+    test "has/2 error", %{path: path} do
+      assert {:error, :enoent} == Xattr.has(path, "test")
+    end
+
+    test "rm/2 returns {:error, :enoent}", %{path: path} do
+      assert {:error, :enoent} == Xattr.rm(path, "test")
+    end
+
+    test "set(path, \"hello\", ...) error", %{path: path} do
+      assert {:error, :enoent} == Xattr.set(path, "hello", "world")
+      assert {:error, :enoent} == Xattr.get(path, "hello")
     end
   end
 
@@ -139,6 +160,49 @@ defmodule XattrTest do
     end
   end
 
+  describe "plain attributes with fresh file" do
+	setup [:new_file]
+	@tag os: :unix
+    test "string, atom, and fully qualified names should not mingle", %{path: path} do
+	  assert :ok == Xattr.set(path, "hello", "world1")
+	  
+	  assert {:ok, ["hello"]} == Xattr.ls(path)
+      assert {:ok, true} == Xattr.has(path, "hello")
+      assert {:ok, false} == Xattr.has(path, :hello)
+      assert {:ok, false} == Xattr.has(path, "user.hello")
+	  assert {:ok, "world1"} == Xattr.get(path, "hello")
+      assert {:error, :enoattr} == Xattr.get(path, :hello)
+	  assert {:error, :enoattr} == Xattr.get(path, "user.hello")
+	  
+	  assert :ok == Xattr.set(path, :hello, "world2")
+
+	  assert {:ok, ["hello", :hello]} == Xattr.ls(path)
+      assert {:ok, true} == Xattr.has(path, "hello")
+      assert {:ok, true} == Xattr.has(path, :hello)
+      assert {:ok, false} == Xattr.has(path, "user.hello")
+	  assert {:ok, "world1"} == Xattr.get(path, "hello")
+      assert {:ok, "world2"} == Xattr.get(path, :hello)
+	  assert {:error, :enoattr} == Xattr.get(path, "user.hello")
+
+	  assert :ok == Xattr.set(path, "user.hello", "world3")
+
+	  
+	  assert {:ok, lst} = Xattr.ls(path)
+	  assert [:hello, "hello", "user.hello"] == Enum.sort(lst)
+      assert {:ok, true} == Xattr.has(path, "hello")
+      assert {:ok, true} == Xattr.has(path, :hello)
+      assert {:ok, true} == Xattr.has(path, "user.hello")
+	  assert {:ok, "world1"} == Xattr.get(path, "hello")
+      assert {:ok, "world2"} == Xattr.get(path, :hello)
+	  assert {:ok, "world3"} == Xattr.get(path, "user.hello")
+
+	  assert {"user.ElixirXattr.a$hello: world2
+user.hello: world3
+user.ElixirXattr.s$hello: world1\n", 0} =
+	  		 System.cmd("xattr", ["-l", path])
+    end
+  end
+
   for {name, fq} <- [
         {"ls/1",
          quote do
@@ -192,6 +256,30 @@ defmodule XattrTest do
       assert :ok == Xattr.rm(path, Foo.Bar)
       assert {:error, :enoattr} == Xattr.get(path, Foo.Bar)
     end
+  end
+
+  describe "with nulls" do
+	setup [:new_file]
+
+    test "name nulls are not allowed", %{path: path} do
+      assert {:error, "name must not contain null bytes"} == Xattr.set(path, "a\0null", "value")
+    end
+
+    test "name nulls don't overwrite", %{path: path} do
+      assert :ok == Xattr.set(path, "a", "original")
+      assert {:error, "name must not contain null bytes"} == Xattr.get(path, "a\0null")
+      assert {:error, "name must not contain null bytes"} == Xattr.set(path, "a\0null", "value")
+      assert {:ok, "original"} == Xattr.get(path, "a")
+    end
+
+    test "value nulls & non-utf8 are supported", %{path: path} do
+      assert :ok == Xattr.set(path, "incendiary", "hey\xa0\xa1\0\xf0\x28\8c\xbcno")
+      assert {:ok, "hey\xa0\xa1\0\xf0\x28\8c\xbcno"} == Xattr.get(path, "incendiary")
+    end
+  end
+
+  defp no_file(_context) do
+	{:ok, [path: "_I_dont_exist.file.txt"]}
   end
 
   defp new_file(_context) do

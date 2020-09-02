@@ -5,6 +5,9 @@ The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/)
 and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
+### Changed
+- Rust Rewrite to remove segfaults (by [@byteit101])
+- Support for system attributes (by [@byteit101])
 
 ## [0.3.1] - 2019-03-17
 ### Changed
@@ -26,10 +29,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 ### Added
 - First version 🎉
 
-[Unreleased]: https://github.com/SoftwareMansion/elixir-xattr/compare/v0.3.1...HEAD
-[0.3.1]: https://github.com/SoftwareMansion/elixir-xattr/compare/v0.3.0...v0.3.1
-[0.3.0]: https://github.com/SoftwareMansion/elixir-xattr/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/SoftwareMansion/elixir-xattr/compare/v0.1.1...v0.2.0
-[0.1.1]: https://github.com/SoftwareMansion/elixir-xattr/compare/v0.1.0...v0.1.1
+[Unreleased]: https://github.com/software-mansion-labs/elixir-xattr/compare/v0.3.1...HEAD
+[0.3.1]: https://github.com/software-mansion-labs/elixir-xattr/compare/v0.3.0...v0.3.1
+[0.3.0]: https://github.com/software-mansion-labs/elixir-xattr/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/software-mansion-labs/elixir-xattr/compare/v0.1.1...v0.2.0
+[0.1.1]: https://github.com/software-mansion-labs/elixir-xattr/compare/v0.1.0...v0.1.1
 
 [@akhilpai]: https://github.com/akhilpai
