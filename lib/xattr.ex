@@ -281,23 +281,23 @@ defmodule Xattr do
   end
 
   defp encode_name(name) when is_atom(name) do
-	if @xattr_native do
-		@user_prefix <> @tag_atom <> to_string(name)
-	else
-		@tag_atom <> to_string(name)
-	end
+    if @xattr_native do
+      @user_prefix <> @tag_atom <> to_string(name)
+    else
+      @tag_atom <> to_string(name)
+    end
   end
 
   defp encode_name(name) when is_binary(name) do
-	if @xattr_native do
-		if name =~ "." do
-			name
-		else
-			@user_prefix <> @tag_str <> name
-		end
-	else
-		@tag_str <> name
-	end
+    if @xattr_native do
+      if name =~ "." do
+        name
+      else
+        @user_prefix <> @tag_str <> name
+      end
+    else
+      @tag_str <> name
+    end
   end
 
   defp decode_name(@user_prefix <> @tag_atom <> bin, true) do
