@@ -201,6 +201,15 @@ user.ElixirXattr.s$hello: world1\n", 0} = System.cmd("xattr", ["-l", path])
     end
   end
 
+  describe "windows encoding" do
+    setup [:new_file]
+	@tag os: :win32
+    test "attributes are encoded", %{path: path} do
+	  assert :ok == Xattr.set(path, "c", "d")
+	  assert {:ok, <<4,0,0,0,115,36,99,0,1,0,0,0,100>>} == File.read(path <> ":ElixirXattr")
+	end
+  end
+
   for {name, fq} <- [
         {"ls/1",
          quote do

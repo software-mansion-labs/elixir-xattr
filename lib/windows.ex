@@ -5,7 +5,7 @@ defmodule Xattr.Windows do
   def parse(binary, parsed \\ [])
 
   def parse(
-        <<namelen::size(32), namez::binary-size(namelen), vallen::size(32),
+        <<namelen::size(32)-unsigned-little, namez::binary-size(namelen), vallen::size(32)-unsigned-little,
           value::binary-size(vallen), rest::binary>>,
         parsed
       ) do
@@ -42,9 +42,9 @@ defmodule Xattr.Windows do
     unparse(
       rest,
       binary <>
-        <<namelen::size(32)>> <>
+        <<namelen::size(32)-unsigned-little>> <>
         binary_part(namez, 0, namelen - 1) <>
-        <<0>> <> <<vallen::size(32)>> <> binary_part(value, 0, vallen)
+        <<0>> <> <<vallen::size(32)-unsigned-little>> <> binary_part(value, 0, vallen)
     )
   end
 
