@@ -1,0 +1,15 @@
+[package]
+name = "xattr_nif"
+version = "0.4.0"
+authors = []
+edition = "2018"
+
+[lib]
+name = "xattr_nif"
+path = "src/lib.rs"
+crate-type = ["dylib"]
+
+[dependencies]
+rustler = "0.22.0-rc.0"
+
+xattr = "0.2.2"
